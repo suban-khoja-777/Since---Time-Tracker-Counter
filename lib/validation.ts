@@ -1,0 +1,7 @@
+import { z } from 'zod';
+const date=z.string().datetime({offset:true}).transform(v=>new Date(v).toISOString());
+export const timerInput=z.object({id:z.string().min(1).max(100),workspaceId:z.string().min(1).max(100),folderId:z.string().max(100).nullable(),title:z.string().trim().min(1).max(80),note:z.string().trim().max(500),kind:z.enum(['since','until']),startedAt:date,counter:z.boolean(),labels:z.array(z.string().trim().toLowerCase().min(1).max(30).regex(/^[\p{L}\p{N}_ -]+$/u)).max(12).transform(v=>[...new Set(v)]),color:z.enum(['mint','peach','lavender','sky','rose','sand']),emoji:z.string().trim().min(1).max(16)});
+export const eventInput=z.object({id:z.string().uuid(),timerId:z.string().min(1).max(100),happenedAt:date,note:z.string().trim().max(500)});
+export const namedInput=z.object({id:z.string().min(1).max(100),name:z.string().trim().min(1).max(60),workspaceId:z.string().max(100).optional()});
+export function assertTimerDate(kind:string,date:string,now=Date.now()){if(kind==='since'&&Date.parse(date)>now)throw new Error('A days-since timer must start in the past or now.');}
+export function assertEventDate(date:string,baseline:string,now=Date.now()){if(Date.parse(date)>now)throw new Error('A recorded event cannot be in the future.');if(Date.parse(date)<Date.parse(baseline))throw new Error('An event cannot be earlier than the timer’s initial start. Edit its start date first.');}

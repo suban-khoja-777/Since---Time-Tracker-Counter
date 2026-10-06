@@ -1,0 +1,6 @@
+<resources>
+ <string name="app_name">Since</string>
+ <color name="brand">#294e40</color>
+ <color name="background">#fafbf8</color>
+ <string name="asset_statements">[{\"relation\":[\"delegate_permission/common.handle_all_urls\"],\"target\":{\"namespace\":\"web\",\"site\":\"https://since-timers.quirky-frost-3022.chatgpt.site\"}}]</string>
+</resources>

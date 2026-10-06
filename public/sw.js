@@ -1,0 +1,4 @@
+// Account data and authenticated responses are deliberately never cached.
+self.addEventListener('install',()=>self.skipWaiting());
+self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));
+self.addEventListener('fetch',event=>{if(event.request.mode==='navigate')event.respondWith(fetch(event.request).catch(()=>new Response('<!doctype html><html lang="en"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Since · Offline</title><body style="font:16px system-ui;background:#fafbf8;color:#294e40;padding:40px"><h1>You’re offline.</h1><p>Since needs a connection to load and sync your saved timers.</p><p>Your recorded moments are safely stored in your account.</p><button onclick="location.reload()" style="padding:12px 20px">Try again</button></body></html>',{headers:{'Content-Type':'text/html; charset=utf-8'}})))});
