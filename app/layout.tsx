@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
-export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#294e40" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#ffffff" };
 
 export const metadata: Metadata = {
   title: "Since — timers & counters",

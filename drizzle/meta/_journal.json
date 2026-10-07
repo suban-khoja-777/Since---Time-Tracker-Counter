@@ -8,6 +8,13 @@
       "when": 1791294318737,
       "tag": "0000_numerous_wilson_fisk",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1791380590195,
+      "tag": "0001_supreme_wolf_cub",
+      "breakpoints": true
     }
   ]
 }

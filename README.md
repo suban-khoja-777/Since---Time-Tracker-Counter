@@ -6,7 +6,11 @@ A working web app and Android PWA, plus a native Android Trusted Web Activity pr
 
 - Create, switch, rename and delete workspaces; keep at least one.
 - Create and rename folders. Removing a folder keeps its timers; deleting a workspace removes its contents.
-- Days-since and days-until timers, custom icons, notes and six card colors.
+- Compact days-since and days-until cards on a clean white surface, with no timer icons.
+- 30 bright card colors plus a custom color picker and hex input. Older preset colors still work.
+- Switch between cards and list rows; toggle each card independently between timer and counter.
+- Create labels in the collapsible sidebar, then assign them to timers or use them as search filters.
+- Download CSV or JSON for a selected workspace or the whole account, including reset history, folders and labels. CSV cells escape spreadsheet formulas and preserve Unicode, quotes and line breaks.
 - Multiple labels per timer; search titles, notes and labels, including `#health`.
 - Opt into a counter when defining a days-since timer; switch between timer and counter card views.
 - Record resets with a chosen date/time and note; inspect and remove mistaken events.
@@ -41,7 +45,9 @@ Local previews simulate a test identity at `/signin-with-chatgpt?return_to=/`. M
 ```powershell
 node node_modules/typescript/bin/tsc --noEmit
 node --test tests/timers.test.ts
+node --test tests/export.test.ts
 node tests/api.mjs
+node tests/export-api.mjs
 node tests/isolation.mjs
 npm run build
 ```
@@ -64,6 +70,7 @@ Open `android/` in Android Studio with JDK 17, Android SDK 36 and Build Tools 35
 - `app/api/tracker/route.ts`: authenticated API and ownership checks.
 - `lib/timers.ts`: elapsed-time and search logic.
 - `lib/validation.ts`: input and date validation.
+- `app/api/export/route.ts` and `lib/export.ts`: authenticated export and CSV serialization.
 - `db/schema.ts` and `drizzle/`: durable storage schema and migrations.
 - `android/`: native browser-backed Android project.
 
