@@ -3,7 +3,7 @@
  <application android:label="Since" android:icon="@drawable/ic_launcher" android:allowBackup="false" android:supportsRtl="true" android:theme="@android:style/Theme.Translucent.NoTitleBar" android:usesCleartextTraffic="false">
   <meta-data android:name="asset_statements" android:resource="@string/asset_statements"/>
   <activity android:name="com.google.androidbrowserhelper.trusted.LauncherActivity" android:exported="true">
-   <meta-data android:name="android.support.customtabs.trusted.DEFAULT_URL" android:value="https://since-timers.quirky-frost-3022.chatgpt.site/"/>
+   <meta-data android:name="android.support.customtabs.trusted.DEFAULT_URL" android:value="https://since-timers.suban-khoja.chatgpt.site/"/>
    <meta-data android:name="android.support.customtabs.trusted.STATUS_BAR_COLOR" android:resource="@color/brand"/>
    <meta-data android:name="android.support.customtabs.trusted.NAVIGATION_BAR_COLOR" android:resource="@color/background"/>
    <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
