@@ -75,3 +75,7 @@ Open `android/` in Android Studio with JDK 17, Android SDK 36 and Build Tools 35
 - `android/`: native browser-backed Android project.
 
 This is an online first version. It does not include email/password sign-in, offline write queues, team collaboration, notifications or Android widgets.
+
+Lifecycle timers: disable **Allow resets** to track one lifetime. The optional end date freezes the elapsed duration once reached; status becomes Closed. Future starts show Future and count down to activation. Existing timers keep resets enabled. Disabling resets preserves event history and measures duration from the initial start. Countdown timers are Active until their target, then Closed. List view shows name, all labels, lifecycle status and elapsed timer; tap the name for actions and details.
+
+Lifecycle API verification: `node tests/lifecycle-api.mjs` (local preview only).
