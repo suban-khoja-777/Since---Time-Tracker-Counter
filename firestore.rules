@@ -1,0 +1,51 @@
+rules_version = '2';
+service cloud.firestore {
+ match /databases/{database}/documents {
+  function owner(uid) { return request.auth != null && request.auth.uid == uid; }
+  match /users/{uid} {
+   allow read, write: if false;
+   match /workspaces/{id} {
+    allow read, delete: if owner(uid);
+    allow create, update: if owner(uid) && request.resource.data.keys().hasOnly(['name']) && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 60;
+   }
+   match /folders/{id} {
+    allow read, delete: if owner(uid);
+    allow create, update: if owner(uid) && request.resource.data.keys().hasOnly(['name','workspaceId']) && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 60 && exists(/databases/$(database)/documents/users/$(uid)/workspaces/$(request.resource.data.workspaceId));
+   }
+   match /labels/{id} {
+    allow read, delete: if owner(uid);
+    allow create, update: if owner(uid) && request.resource.data.keys().hasOnly(['name','workspaceId']) && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 30 && exists(/databases/$(database)/documents/users/$(uid)/workspaces/$(request.resource.data.workspaceId));
+   }
+   match /timers/{id} {
+    allow read, delete: if owner(uid);
+    allow create, update: if owner(uid)
+     && request.resource.data.keys().hasOnly(['id','workspaceId','folderId','title','note','kind','startedAt','startedAtMs','endedAt','endedAtMs','resetEnabled','counter','labels','color','emoji'])
+     && request.resource.data.id == id
+     && request.resource.data.title is string && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 80
+     && request.resource.data.note is string && request.resource.data.note.size() <= 500
+     && request.resource.data.kind in ['since','until']
+     && request.resource.data.startedAt is string && request.resource.data.startedAtMs is number
+     && request.resource.data.resetEnabled is bool && request.resource.data.counter is bool
+     && (request.resource.data.kind == 'since' || !request.resource.data.counter)
+     && request.resource.data.labels is list && request.resource.data.labels.size() <= 12
+     && request.resource.data.color is string
+     && (request.resource.data.endedAt == null || (!request.resource.data.resetEnabled && request.resource.data.kind == 'since' && request.resource.data.endedAt is string && request.resource.data.endedAtMs is number && request.resource.data.endedAtMs >= request.resource.data.startedAtMs))
+     && (!request.resource.data.resetEnabled || request.resource.data.kind == 'until' || request.resource.data.startedAtMs <= request.time.toMillis())
+     && exists(/databases/$(database)/documents/users/$(uid)/workspaces/$(request.resource.data.workspaceId))
+     && (request.resource.data.folderId == null || get(/databases/$(database)/documents/users/$(uid)/folders/$(request.resource.data.folderId)).data.workspaceId == request.resource.data.workspaceId);
+   }
+   match /events/{id} {
+    allow read, delete: if owner(uid);
+    allow update: if false;
+    allow create: if owner(uid)
+     && request.resource.data.keys().hasOnly(['id','timerId','happenedAt','happenedAtMs','note','createdAt'])
+     && request.resource.data.id == id && request.resource.data.happenedAt is string && request.resource.data.createdAt is string
+     && request.resource.data.note is string && request.resource.data.note.size() <= 500
+     && request.resource.data.happenedAtMs is number && request.resource.data.happenedAtMs <= request.time.toMillis()
+     && get(/databases/$(database)/documents/users/$(uid)/timers/$(request.resource.data.timerId)).data.resetEnabled
+     && get(/databases/$(database)/documents/users/$(uid)/timers/$(request.resource.data.timerId)).data.kind == 'since'
+     && request.resource.data.happenedAtMs >= get(/databases/$(database)/documents/users/$(uid)/timers/$(request.resource.data.timerId)).data.startedAtMs;
+   }
+  }
+ }
+}

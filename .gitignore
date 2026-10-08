@@ -50,3 +50,5 @@ next-env.d.ts
 *.jks
 *.keystore
 *.tsbuildinfo
+/firebase-debug.log*
+/.firebase/

@@ -1,58 +1,20 @@
 # Since — timers & counters
 
-A working web app and Android PWA, plus a native Android Trusted Web Activity project. Account data lives in Cloudflare D1 and is scoped to the signed-in ChatGPT user. The first deployment is private to its owner; it is not a public multi-user launch.
+Firebase Authentication (Google and email/password) and Cloud Firestore now power app accounts and records. New accounts start empty, with a Personal workspace. Previous D1 data is not migrated; the legacy API returns 410 and accepts no writes. Sites hosting retains its existing owner-private audience, so its platform access gate is separate from Firebase sign-in.
 
-## What works
+## Features
 
-- Create, switch, rename and delete workspaces; keep at least one.
-- Create and rename folders. Removing a folder keeps its timers; deleting a workspace removes its contents.
-- Compact days-since and days-until cards on a clean white surface, with no timer icons.
-- 30 bright card colors plus a custom color picker and hex input. Older preset colors still work.
-- Switch between cards and list rows; toggle each card independently between timer and counter.
-- Create labels in the collapsible sidebar, then assign them to timers or use them as search filters.
-- Download CSV or JSON for a selected workspace or the whole account, including reset history, folders and labels. CSV cells escape spreadsheet formulas and preserve Unicode, quotes and line breaks.
-- Multiple labels per timer; search titles, notes and labels, including `#health`.
-- Opt into a counter when defining a days-since timer; switch between timer and counter card views.
-- Record resets with a chosen date/time and note; inspect and remove mistaken events.
-- Counters start at zero and equal the number of recorded reset events. Editing a timer does not add a reset. Disabling the counter hides it and keeps its events.
-- The elapsed timer uses the most recent event timestamp, falling back to its initial start. A backdated event increases the counter but never moves the timer behind a newer event.
-- Reject future resets and resets before the initial start; completed countdowns stop at zero.
-- Duplicate submission identifiers do not increment counters twice.
-- Refresh on focus/connection recovery and every 15 seconds while the app is visible. Saves refresh immediately. Timers tick locally every second; an internet connection is required to load and save records.
+Multiple workspaces, folders, sidebar labels and label search; days-since and countdown timers; optional event counters and resets; end dates and Future/Active/Closed lifecycle states; compact cards and square list rows; 30 color presets/custom colors; account/workspace CSV and JSON exports. Closed lifetime timers freeze at the end date. Reset events are transactional and idempotent. Disabling counters or resets preserves event history.
 
-### Fast-food example
+Records live at users/{firebaseUid}/{workspaces,folders,labels,timers,events}/{id}. Firestore rules allow only the authenticated owner and validate writes. No Admin key is shipped to the browser. Firebase web configuration in lib/firebase.ts is public. Network access is required; the app refreshes immediately after saves, on focus/reconnection, and every 15 seconds while visible.
 
-Create **Fast food**, choose **Days since**, enter an initial date and enable **Include a counter card**. It starts at **0 times**. Choose **Log & reset**, enter when you ate it, and save. The counter becomes **1**, and the timer runs from that event time. Creating the timer itself does not count as eating fast food.
+## Local development
 
-## Run locally
+Use Node 22 or newer, npm install, and npm run dev. Use Firebase accounts in the configured project; there is no mock login. Email/password and Google must remain enabled in Firebase Authentication. The deployed domain is since-timers.suban-khoja.chatgpt.site. Firebase rules are in firestore.rules; deploy with firebase deploy --only firestore:rules --project since-tracker-app. Firestore stores structured records; no file attachments or Cloud Storage feature is needed.
 
-Requires Node.js 22.13 or newer. From this directory:
+## Verification
 
-```powershell
-npm ci
-npm run db:generate
-npm run build
-node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_numerous_wilson_fisk.sql
-npm run dev
-```
-
-Apply the initial migration only once to a fresh local database. On this Windows host, the installed `npm.cmd` shim failed when launched by a child process; running `node 'C:/Program Files/nodejs/node_modules/npm/bin/npm-cli.js' <npm arguments>` works. This is a host tooling workaround, not an application dependency.
-
-Local previews simulate a test identity at `/signin-with-chatgpt?return_to=/`. Mock identity is excluded from production. Hosted pages use dispatch-owned ChatGPT sign-in; the server verifies ownership for every query and mutation. Data is never cached by the service worker or stored in localStorage.
-
-## Checks
-
-```powershell
-node node_modules/typescript/bin/tsc --noEmit
-node --test tests/timers.test.ts
-node --test tests/export.test.ts
-node tests/api.mjs
-node tests/export-api.mjs
-node tests/isolation.mjs
-npm run build
-```
-
-API checks require the local preview and migrated database. They create and remove their own test fixtures. The isolation test additionally uses Wrangler against the local database; never run these tests against production.
+Run node --test tests/timers.test.ts tests/export.test.ts and node node_modules/typescript/bin/tsc --noEmit. The legacy API scripts cover the retired D1 implementation only. tests/firebase-integration.mjs explicitly opts into disposable Firebase accounts and checks signup/sign-in, persistence, resets, lifecycle, exports, rule enforcement and account isolation. Build its entry with .sites-runtime/build-firebase-test.mjs, then set SINCE_FIREBASE_TESTS=1 and run the test. It cleans up its own records and accounts.
 
 ## Android
 
@@ -64,18 +26,7 @@ Open `android/` in Android Studio with JDK 17, Android SDK 36 and Build Tools 35
 
 **The native project has not been built or run on a device.** The authoring machine only has Java 8 and no Android SDK, so no APK is included. Before native release, configure your signing key, publish its SHA-256 certificate fingerprint in a publicly accessible `/.well-known/assetlinks.json`, validate sign-in on a real device and complete store packaging. A private owner-only Site may block anonymous asset-link verification, so a verified public origin/access arrangement is needed for full-screen TWA mode. The Gradle wrapper is downloaded from the official Gradle v8.13.0 repository; no signing keys are generated or committed.
 
+
 ## Source
 
-- `app/tracker.tsx`: responsive UI and shared visible search action.
-- `app/api/tracker/route.ts`: authenticated API and ownership checks.
-- `lib/timers.ts`: elapsed-time and search logic.
-- `lib/validation.ts`: input and date validation.
-- `app/api/export/route.ts` and `lib/export.ts`: authenticated export and CSV serialization.
-- `db/schema.ts` and `drizzle/`: durable storage schema and migrations.
-- `android/`: native browser-backed Android project.
-
-This is an online first version. It does not include email/password sign-in, offline write queues, team collaboration, notifications or Android widgets.
-
-Lifecycle timers: disable **Allow resets** to track one lifetime. The optional end date freezes the elapsed duration once reached; status becomes Closed. Future starts show Future and count down to activation. Existing timers keep resets enabled. Disabling resets preserves event history and measures duration from the initial start. Countdown timers are Active until their target, then Closed. List view shows name, all labels, lifecycle status and elapsed timer; tap the name for actions and details.
-
-Lifecycle API verification: `node tests/lifecycle-api.mjs` (local preview only).
+app/firebase-account.tsx contains the sign-in/registration/reset-password screen. lib/firebase-data.ts owns Firestore operations and exports. app/tracker.tsx provides the timer interface. The Sites hosting manifest and historic D1 migrations are retained; application data no longer uses D1.
