@@ -22,3 +22,5 @@ body{background:#fff;color:#171717;font-size:13px}.app-sidebar [data-slot=sideba
 @keyframes status-breathe{0%,100%{box-shadow:0 0 0 0 currentColor;opacity:1}50%{box-shadow:0 0 0 2px #00000000;opacity:.55}}
 @media(max-width:650px){.timer-list-item{padding:8px 12px;gap:10px}.list-duration .time-value>span:first-child{font-size:22px}.timer-card{padding-top:17px}.list-title{font-size:12px}}
 @media(prefers-reduced-motion:reduce){.status-dot{animation:none}}
+/* Separate square list rows with a small breathing gap. */
+.timer-list{gap:6px;border:0;border-radius:0;overflow:visible;background:transparent}.timer-list-item,.timer-list-item:last-child{border:1px solid #eeeeee;border-radius:0}.timer-list-item::before{left:-1px;top:-1px;bottom:-1px}
