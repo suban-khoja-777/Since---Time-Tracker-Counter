@@ -1,6 +1,6 @@
 export type Workspace = { id: string; name: string };
 export type Folder = { id: string; workspaceId: string; name: string };
-export type Timer = { id: string; workspaceId: string; folderId: string | null; title: string; note: string; kind: 'since' | 'until'; startedAt: string; resetEnabled?: boolean; endedAt?: string | null; counter: boolean; labels: string[]; color: string; emoji: string; count: number; lastEvent: string | null };
+export type Timer = { id: string; workspaceId: string; folderId: string | null; title: string; note: string; kind: 'since' | 'until'; startedAt: string; textColor?: 'black' | 'white'; deletedAt?: string | null; resetEnabled?: boolean; endedAt?: string | null; counter: boolean; labels: string[]; color: string; emoji: string; count: number; lastEvent: string | null };
 export type Event = { id: string; timerId: string; happenedAt: string; note: string; createdAt: string };
 export type Label = { id:string; workspaceId:string; name:string };
 export type Snapshot = { workspaces: Workspace[]; folders: Folder[]; labels: Label[]; timers: Timer[]; user: { name: string; email: string } };

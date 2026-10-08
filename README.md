@@ -4,7 +4,7 @@ Firebase Authentication (Google and email/password) and Cloud Firestore now powe
 
 ## Features
 
-Multiple workspaces, folders, sidebar labels and label search; days-since and countdown timers; optional event counters and resets; end dates and Future/Active/Closed lifecycle states; compact cards and square list rows; 30 color presets/custom colors; account/workspace CSV and JSON exports. Closed lifetime timers freeze at the end date. Reset events are transactional and idempotent. Disabling counters or resets preserves event history.
+Multiple workspaces, folders, sidebar labels and label search; days-since and countdown timers; optional event counters and resets; end dates and Future/Active/Closed lifecycle states; compact cards and square list rows; 30 color presets/custom colors, colored title headers with black/white text and a live preview; timer Trash with restore and permanent deletion; account/workspace CSV and JSON exports. Closed lifetime timers freeze at the end date. Reset events are transactional and idempotent. Disabling counters or resets preserves event history. Moving a timer to Trash also preserves its history; CSV/JSON exports include trashed timers and their deletion dates.
 
 Records live at users/{firebaseUid}/{workspaces,folders,labels,timers,events}/{id}. Firestore rules allow only the authenticated owner and validate writes. No Admin key is shipped to the browser. Firebase web configuration in lib/firebase.ts is public. Network access is required; the app refreshes immediately after saves, on focus/reconnection, and every 15 seconds while visible.
 

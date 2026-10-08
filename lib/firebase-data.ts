@@ -40,20 +40,23 @@ export async function mutate(payload:Record<string,unknown>){
   if(p.folderId){const folders=await localRows<Snapshot['folders'][number]>('folders');if(!folders.some(f=>f.id===p.folderId&&f.workspaceId===p.workspaceId))throw new Error('Choose a folder in this workspace.');}
   const history=(await localRows<Event>('events')).filter(e=>e.timerId===p.id);const first=history.map(e=>e.happenedAt).sort()[0];
   if(first&&(p.kind!=='since'||p.startedAt>first))throw new Error('Keep the start on or before the first recorded event.');
-  await write(localRef('timers',p.id),{...p,startedAtMs:Date.parse(p.startedAt),endedAtMs:p.endedAt?Date.parse(p.endedAt):null});return;
+  const r=localRef('timers',p.id);await runTransaction(firestore,async tx=>{const old=await tx.get(r);if(old.exists()&&old.data().deletedAt)throw new Error('This timer is in Trash. Restore it before editing.');tx.set(r,{...p,deletedAt:null,startedAtMs:Date.parse(p.startedAt),endedAtMs:p.endedAt?Date.parse(p.endedAt):null});});return;
  }
  if(action==='record-event'){
   const p=eventInput.parse(payload),tr=localRef('timers',p.timerId),er=localRef('events',p.id);
   await runTransaction(firestore,async tx=>{const [t,e]=await Promise.all([tx.get(tr),tx.get(er)]);if(!t.exists())throw new Error('Timer not found.');const timer=t.data() as Timer;
-   if(!timer.resetEnabled||timer.kind!=='since')throw new Error('Resets are disabled for this timer.');assertEventDate(p.happenedAt,timer.startedAt);
+   if(timer.deletedAt)throw new Error('This timer is in Trash.');if(!timer.resetEnabled||timer.kind!=='since')throw new Error('Resets are disabled for this timer.');assertEventDate(p.happenedAt,timer.startedAt);
    if(e.exists()){if(e.data().timerId!==p.timerId)throw new Error('Event identifier already used.');return;}
    tx.set(er,{...p,happenedAtMs:Date.parse(p.happenedAt),createdAt:new Date().toISOString()});});return;
  }
  if(action==='delete-event'){
   const r=localRef('events',String(payload.id));await runTransaction(firestore,async tx=>{const e=await tx.get(r);if(e.exists()&&e.data().timerId!==payload.timerId)throw new Error('Event not found.');tx.delete(r);});return;
  }
- if(action==='delete-timer'){
-  const id=String(payload.id);const events=(await localRows<Event>('events')).filter(e=>e.timerId===id);await remove([localRef('timers',id),...events.map(e=>localRef('events',e.id))]);return;
+ if(action==='delete-timer'||action==='restore-timer'){
+  const r=localRef('timers',String(payload.id));await runTransaction(firestore,async tx=>{const t=await tx.get(r);if(!t.exists())throw new Error('Timer not found.');tx.update(r,{deletedAt:action==='delete-timer'?new Date().toISOString():null});});return;
+ }
+ if(action==='purge-timer'){
+  const id=String(payload.id),r=localRef('timers',id),events=(await localRows<Event>('events')).filter(e=>e.timerId===id);await runTransaction(firestore,async tx=>{const t=await tx.get(r);if(!t.exists()||!t.data().deletedAt)throw new Error('Move the timer to Trash before deleting it permanently.');events.forEach(e=>tx.delete(localRef('events',e.id)));tx.delete(r);});return;
  }
  if(action==='delete-folder'){
   const id=String(payload.id),timers=(await localRows<Timer>('timers')).filter(t=>t.folderId===id);
@@ -79,6 +82,6 @@ export async function exportData(scope:string,format:string){
  const result={version:2,exportedAt:new Date().toISOString(),scope,workspaces,folders,labels,timers,events};
  if(format==='json')return new Blob([JSON.stringify(result,null,2)],{type:'application/json'});
  const names=new Map(workspaces.map(w=>[w.id,w.name])),folderNames=new Map(folders.map(f=>[f.id,f.name])),timerMap=new Map(timers.map(t=>[t.id,t]));
- const records=[...workspaces.map(w=>({record_type:'workspace',id:w.id,workspace_id:w.id,workspace_name:w.name,name:w.name})),...folders.map(f=>({record_type:'folder',id:f.id,workspace_id:f.workspaceId,workspace_name:names.get(f.workspaceId),name:f.name})),...labels.map(l=>({record_type:'label',id:l.id,workspace_id:l.workspaceId,workspace_name:names.get(l.workspaceId),name:l.name})),...timers.map(t=>({record_type:'timer',id:t.id,workspace_id:t.workspaceId,workspace_name:names.get(t.workspaceId),folder_id:t.folderId,folder_name:t.folderId?folderNames.get(t.folderId):'',title:t.title,kind:t.kind,started_at:t.startedAt,ended_at:t.endedAt,reset_enabled:t.resetEnabled,counter_enabled:t.counter,labels:JSON.stringify(t.labels),color:t.color,count:t.count,last_event:t.lastEvent,note:t.note})),...events.map(e=>({record_type:'event',id:e.id,timer_id:e.timerId,workspace_id:timerMap.get(e.timerId)?.workspaceId,title:timerMap.get(e.timerId)?.title,event_time:e.happenedAt,created_at:e.createdAt,note:e.note}))];
- return new Blob([toCSV(['record_type','id','workspace_id','workspace_name','name','folder_id','folder_name','timer_id','title','kind','started_at','ended_at','reset_enabled','counter_enabled','labels','color','count','last_event','event_time','created_at','note'],records)],{type:'text/csv;charset=utf-8'});
+ const records=[...workspaces.map(w=>({record_type:'workspace',id:w.id,workspace_id:w.id,workspace_name:w.name,name:w.name})),...folders.map(f=>({record_type:'folder',id:f.id,workspace_id:f.workspaceId,workspace_name:names.get(f.workspaceId),name:f.name})),...labels.map(l=>({record_type:'label',id:l.id,workspace_id:l.workspaceId,workspace_name:names.get(l.workspaceId),name:l.name})),...timers.map(t=>({record_type:'timer',id:t.id,workspace_id:t.workspaceId,workspace_name:names.get(t.workspaceId),folder_id:t.folderId,folder_name:t.folderId?folderNames.get(t.folderId):'',title:t.title,kind:t.kind,started_at:t.startedAt,ended_at:t.endedAt,reset_enabled:t.resetEnabled,counter_enabled:t.counter,labels:JSON.stringify(t.labels),color:t.color,text_color:t.textColor,deleted_at:t.deletedAt,count:t.count,last_event:t.lastEvent,note:t.note})),...events.map(e=>({record_type:'event',id:e.id,timer_id:e.timerId,workspace_id:timerMap.get(e.timerId)?.workspaceId,title:timerMap.get(e.timerId)?.title,event_time:e.happenedAt,created_at:e.createdAt,note:e.note}))];
+ return new Blob([toCSV(['record_type','id','workspace_id','workspace_name','name','folder_id','folder_name','timer_id','title','kind','started_at','ended_at','reset_enabled','counter_enabled','labels','color','text_color','deleted_at','count','last_event','event_time','created_at','note'],records)],{type:'text/csv;charset=utf-8'});
 }
