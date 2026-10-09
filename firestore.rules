@@ -19,7 +19,7 @@ service cloud.firestore {
    match /timers/{id} {
     allow read, delete: if owner(uid);
     allow create, update: if owner(uid)
-     && request.resource.data.keys().hasOnly(['id','workspaceId','folderId','title','note','kind','startedAt','startedAtMs','endedAt','endedAtMs','resetEnabled','counter','labels','color','emoji','textColor','deletedAt'])
+     && request.resource.data.keys().hasOnly(['id','workspaceId','folderId','title','note','kind','startedAt','startedAtMs','endedAt','endedAtMs','resetEnabled','counter','labels','color','emoji','textColor','deletedAt','precision'])
      && request.resource.data.id == id
      && request.resource.data.title is string && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 80
      && request.resource.data.note is string && request.resource.data.note.size() <= 500
@@ -29,6 +29,7 @@ service cloud.firestore {
      && (request.resource.data.kind == 'since' || !request.resource.data.counter)
      && request.resource.data.labels is list && request.resource.data.labels.size() <= 12
      && request.resource.data.color is string
+     && request.resource.data.get('precision','seconds') in ['seconds','minutes','hours','days','months','years']
      && request.resource.data.get('textColor','black') in ['black','white']
      && (request.resource.data.get('deletedAt',null) == null || request.resource.data.deletedAt is string)
      && (request.resource.data.endedAt == null || (!request.resource.data.resetEnabled && request.resource.data.kind == 'since' && request.resource.data.endedAt is string && request.resource.data.endedAtMs is number && request.resource.data.endedAtMs >= request.resource.data.startedAtMs))

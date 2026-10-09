@@ -1,6 +1,22 @@
+export type Precision = 'seconds'|'minutes'|'hours'|'days'|'months'|'years';
+export const durationUnits: {id:Precision;short:string;seconds:number}[] = [
+ {id:'years',short:'y',seconds:365*86400},{id:'months',short:'mo',seconds:30*86400},
+ {id:'days',short:'d',seconds:86400},{id:'hours',short:'h',seconds:3600},
+ {id:'minutes',short:'m',seconds:60},{id:'seconds',short:'s',seconds:1},
+];
+export function formatDuration(totalSeconds:number,precision:Precision='seconds'){
+ const total=Number.isFinite(totalSeconds)?Math.max(0,Math.floor(totalSeconds)):0;
+ const end=Math.max(0,durationUnits.findIndex(u=>u.id===precision));
+ let start=durationUnits.findIndex(u=>total>=u.seconds);if(start<0)start=durationUnits.length-1;
+ if(total===0&&precision==='seconds')return '0s';
+ if(start>end)return '<1'+durationUnits[end].short;
+ let remaining=total;const parts:string[]=[];
+ for(let i=start;i<=end;i++){const unit=durationUnits[i],value=Math.floor(remaining/unit.seconds);parts.push(value+unit.short);remaining%=unit.seconds;}
+ return parts.join(' ');
+}
 export type Workspace = { id: string; name: string };
 export type Folder = { id: string; workspaceId: string; name: string };
-export type Timer = { id: string; workspaceId: string; folderId: string | null; title: string; note: string; kind: 'since' | 'until'; startedAt: string; textColor?: 'black' | 'white'; deletedAt?: string | null; resetEnabled?: boolean; endedAt?: string | null; counter: boolean; labels: string[]; color: string; emoji: string; count: number; lastEvent: string | null };
+export type Timer = { id: string; workspaceId: string; folderId: string | null; title: string; note: string; kind: 'since' | 'until'; startedAt: string; precision?: Precision; textColor?: 'black' | 'white'; deletedAt?: string | null; resetEnabled?: boolean; endedAt?: string | null; counter: boolean; labels: string[]; color: string; emoji: string; count: number; lastEvent: string | null };
 export type Event = { id: string; timerId: string; happenedAt: string; note: string; createdAt: string };
 export type Label = { id:string; workspaceId:string; name:string };
 export type Snapshot = { workspaces: Workspace[]; folders: Folder[]; labels: Label[]; timers: Timer[]; user: { name: string; email: string } };
