@@ -3,6 +3,7 @@ import {useEffect,useState,type FormEvent} from 'react';
 import {onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,GoogleAuthProvider,signInWithPopup,sendPasswordResetEmail,type User} from 'firebase/auth';
 import {auth} from '@/lib/firebase';
 import Tracker from './tracker';
+import {InstallApp} from './pwa-controls';
 
 function authError(error:unknown){
  const code=(error as {code?:string}).code;
@@ -35,5 +36,5 @@ export default function FirebaseAccount(){
  return <main className="auth-shell"><section className="auth-panel"><div className="auth-brand">Since</div><h1>{mode==='signup'?'Create your account':mode==='reset'?'Reset your password':'Welcome back'}</h1><p className="auth-caption">Your timers and workspaces, synced across devices.</p>
  {mode!=='reset'&&<><button className="google-button" onClick={google} disabled={busy}>Continue with Google</button><div className="auth-divider">or use email</div></>}
  <form className="form-grid" onSubmit={submit}>{error&&<p className="form-error" role="alert">{error}</p>}{notice&&<p className="auth-notice" role="status">{notice}</p>}<label className="form-field">Email<input type="email" autoComplete="email" required value={email} onChange={e=>setEmail(e.target.value)} disabled={busy}/></label>{mode!=='reset'&&<label className="form-field">Password<input type="password" autoComplete={mode==='signup'?'new-password':'current-password'} minLength={mode==='signup'?6:undefined} required value={password} onChange={e=>setPassword(e.target.value)} disabled={busy}/></label>}<button type="submit" className="primary-button" disabled={busy}>{busy?'Please wait…':mode==='signup'?'Create account':mode==='reset'?'Send reset link':'Sign in'}</button></form>
- <div className="auth-links">{mode==='signin'?<><button onClick={()=>change('reset')} disabled={busy}>Forgot password?</button><button onClick={()=>change('signup')} disabled={busy}>Create an account</button></>:<button onClick={()=>change('signin')} disabled={busy}>Back to sign in</button>}</div></section></main>;
+ <div className="auth-links">{mode==='signin'?<><button onClick={()=>change('reset')} disabled={busy}>Forgot password?</button><button onClick={()=>change('signup')} disabled={busy}>Create an account</button></>:<button onClick={()=>change('signin')} disabled={busy}>Back to sign in</button>}</div><InstallApp/></section></main>;
 }

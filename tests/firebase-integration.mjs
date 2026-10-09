@@ -1,3 +1,5 @@
+import 'fake-indexeddb/auto';
+let connected=true;Object.defineProperty(navigator,'onLine',{get:()=>connected,configurable:true});Object.defineProperty(navigator,'locks',{value:{request:async(_name,operation)=>operation()},configurable:true});
 // Explicit opt-in: creates disposable accounts and only their own test data.
 import assert from 'node:assert/strict';
 import {initializeApp,deleteApp} from 'firebase/app';
@@ -19,6 +21,7 @@ try{
  data=await requestJSON('/api/tracker');assert.equal(data.timers[0].count,1);assert.equal(data.timers[0].lastEvent,p.happenedAt);assert.equal(data.labels[0].name,'food');
  await post({action:'delete-timer',id});data=await requestJSON('/api/tracker');assert.ok(data.timers.find(t=>t.id===id).deletedAt);assert.equal(data.timers.find(t=>t.id===id).count,1);await assert.rejects(post({...p,id:crypto.randomUUID()}),/Trash/);await assert.rejects(post(timer),/Trash/);await post({action:'restore-timer',id});data=await requestJSON('/api/tracker');assert.equal(data.timers.find(t=>t.id===id).deletedAt,null);assert.equal(data.timers.find(t=>t.id===id).count,1);assert.equal(data.timers.find(t=>t.id===id).textColor,'white');
  await signOut(auth);await signInWithEmailAndPassword(auth,email,password);data=await requestJSON('/api/tracker');assert.equal(data.timers[0].count,1);
+ const offlineEvent={...p,id:crypto.randomUUID(),happenedAt:new Date(Date.now()-600000).toISOString()};connected=false;await post(offlineEvent);await post(offlineEvent);data=await requestJSON('/api/tracker');assert.equal(data.timers.find(t=>t.id===id).count,2);const offlineExport=JSON.parse(await (await exportData('all','json')).text());assert.equal(offlineExport.pendingChanges.length,2);assert.equal(offlineExport.events.length,2);await setDoc(doc(firestore,'users',first.uid,'timers',id),{deletedAt:new Date().toISOString()},{merge:true});connected=true;await assert.rejects(requestJSON('/api/tracker'),/Trash/);assert.equal(JSON.parse(await (await exportData('all','json')).text()).pendingChanges.length,2);await setDoc(doc(firestore,'users',first.uid,'timers',id),{deletedAt:null},{merge:true});data=await requestJSON('/api/tracker');assert.equal(data.timers.find(t=>t.id===id).count,2);assert.equal(JSON.parse(await (await exportData('all','json')).text()).pendingChanges.length,0);await post({action:'delete-event',id:offlineEvent.id,timerId:id});
  const phone={...timer,id:crypto.randomUUID(),title:'Phone life',folderId:null,resetEnabled:false,counter:false,endedAt:new Date(Date.now()-86400000).toISOString()};await post(phone);
  await assert.rejects(post({...p,id:crypto.randomUUID(),timerId:phone.id}),/Resets are disabled/);
  const blocked=crypto.randomUUID();await assert.rejects(setDoc(doc(firestore,'users',first.uid,'events',blocked),{id:blocked,timerId:phone.id,happenedAt:p.happenedAt,happenedAtMs:Date.parse(p.happenedAt),createdAt:p.happenedAt,note:''}),e=>e.code==='permission-denied');
@@ -32,7 +35,7 @@ try{
  await post({action:'delete-event',id:event,timerId:id});data=await requestJSON('/api/tracker');assert.equal(data.timers.find(t=>t.id===id).count,0);
  await clean(firestore,auth.currentUser);first=null;
  await assert.rejects(getDoc(doc(firestore,'users','anonymous-check','timers','x')),e=>e.code==='permission-denied');
- console.log('PASS: Firebase signup/sign-in, persistence, labels/folders, reset idempotency, lifecycle, text color, trash/restore/purge, exports, rule enforcement, cross-account and anonymous isolation. Test accounts and data removed.');
+ console.log('PASS: Firebase signup/sign-in, persistence, labels/folders, reset idempotency, lifecycle, text color, trash/restore/purge, offline queue/reconnect/idempotency/export, exports, rule enforcement, cross-account and anonymous isolation. Test accounts and data removed.');
 }catch(e){console.error('Firebase verification failed: '+e.message);process.exitCode=1;}finally{
  if(second&&secondApp)await clean(getFirestore(secondApp),second).catch(()=>{});
  if(first&&auth.currentUser)await clean(firestore,auth.currentUser).catch(()=>{});

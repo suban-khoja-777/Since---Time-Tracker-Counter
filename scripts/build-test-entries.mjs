@@ -1,0 +1,2 @@
+import {build} from 'esbuild';
+for(const [name,contents] of [['offline',"export * from './lib/offline.ts';"],['firebase-integration',"export * from './lib/firebase-data.ts';export {auth,firestore,firebaseConfig} from './lib/firebase.ts';"]])await build({stdin:{contents,resolveDir:process.cwd(),sourcefile:name+'.ts'},bundle:true,platform:'node',format:'esm',packages:'external',outfile:'.sites-runtime/'+name+'-entry.mjs'});

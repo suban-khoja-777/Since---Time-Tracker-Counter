@@ -1,0 +1,10 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import vm from 'node:vm';import {readFileSync} from 'node:fs';
+test('service worker reopens cached shell offline and ignores APIs/auth/data requests',async()=>{
+ const listeners={},stores=new Map();let online=true;const requests=[];
+ const fetch=async input=>{const url=typeof input==='string'?input:input.url;requests.push(url);if(!online)throw Error('offline');if(url==='/pwa-assets.json')return new Response(JSON.stringify(['/_next/static/main.js','https://bad.invalid/x.js','/api/tracker']));return new Response(url==='/'?'<meta name="since-app-shell" content="1"><main>Loading your account</main>':'asset',{headers:{'content-type':url==='/'?'text/html':'text/plain'}});};
+ const caches={open:async name=>{if(!stores.has(name)){const values=new Map();stores.set(name,{addAll:async urls=>{for(const u of urls)values.set(u,await fetch(u));},put:async (u,r)=>values.set(typeof u==='string'?u:new URL(u.url).pathname,r),match:async u=>values.get(typeof u==='string'?u:new URL(u.url).pathname)?.clone()});}return stores.get(name);},keys:async()=>[...stores.keys()],delete:async name=>stores.delete(name)};
+ vm.runInNewContext(readFileSync('public/sw.js','utf8'),{self:{location:{origin:'https://since.test'},clients:{claim:async()=>{}},addEventListener:(n,cb)=>listeners[n]=cb,skipWaiting:()=>{}},caches,fetch,URL});
+ let task;listeners.install({waitUntil:p=>task=p});await task;assert.ok(!requests.includes('/api/tracker'));assert.ok(!requests.includes('https://bad.invalid/x.js'));
+ online=false;let response;listeners.fetch({request:{url:'https://since.test/',method:'GET',mode:'navigate',destination:'document'},respondWith:p=>response=p});assert.match(await (await response).text(),/Loading your account/);
+ for(const url of ['https://since.test/api/tracker','https://since.test/__/auth/handler','https://firestore.googleapis.com/v1/data','https://since.test/?_rsc=123']){let handled=false;listeners.fetch({request:{url,method:'GET',mode:'cors',destination:''},respondWith:()=>handled=true});assert.equal(handled,false,url);}
+});

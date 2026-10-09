@@ -36,3 +36,4 @@ body{background:#fff;color:#171717;font-size:13px}.app-sidebar [data-slot=sideba
 .timer-card .card-top .status-closed{background:#f1f1f1;color:#606060}
 .timer-card .card-meta{justify-content:flex-end;min-height:0;margin-top:8px}
 .timer-card .card-reading{margin-top:8px}
+.pwa-install{display:grid;gap:7px;margin:10px 0}.pwa-install>.secondary-button{padding:7px 12px;font-size:11px}.offline-notice{padding:9px 12px;margin:0 0 12px;background:#fff7e6;color:#79531f;border:1px solid #f2dfb7;border-radius:6px;font-size:11px;line-height:1.6}.offline-notice[hidden]{display:none}.offline-notice button{margin-left:8px;text-decoration:underline}.pwa-update{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:100;background:#171717;color:#fff;padding:12px 16px;border-radius:8px;max-width:calc(100vw - 24px);width:max-content;font-size:12px;box-shadow:0 3px 15px #0002}.pwa-update button{margin-left:12px;text-decoration:underline}
