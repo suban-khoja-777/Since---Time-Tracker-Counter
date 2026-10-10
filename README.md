@@ -10,6 +10,8 @@ Records live at users/{firebaseUid}/{workspaces,folders,labels,timers,events}/{i
 
 ## Local development
 
+The local development server uses port 5180: run `npm run dev`, then open http://localhost:5180.
+
 Use Node 22 or newer, npm install, and npm run dev. Use Firebase accounts in the configured project; there is no mock login. Email/password and Google must remain enabled in Firebase Authentication. The deployed domain is since-timers.suban-khoja.chatgpt.site. Firebase rules are in firestore.rules; deploy with firebase deploy --only firestore:rules --project since-tracker-app. Firestore stores structured records; no file attachments or Cloud Storage feature is needed.
 
 ## Verification
