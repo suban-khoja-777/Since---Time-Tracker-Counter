@@ -11,9 +11,9 @@ export const metadata: Metadata = {
   other: {"since-app-shell":"1"},
   appleWebApp: { capable: true, title: "Since", statusBarStyle: "default" },
   icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
-    apple: "/icon-192.png",
+    icon: [{ url: "/favicon.svg?v=2", type: "image/svg+xml" }, { url: "/favicon.png?v=2", sizes: "32x32", type: "image/png" }],
+    shortcut: "/favicon.png?v=2",
+    apple: "/apple-touch-icon.png",
   },
 };
 

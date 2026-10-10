@@ -1,5 +1,5 @@
 const CACHE='since-pwa-__BUILD__';
-const FIXED=['/offline.html','/manifest.webmanifest','/icon-192.png','/icon-512.png','/favicon.svg'];
+const FIXED=['/offline.html','/manifest.webmanifest','/icon-192.png','/icon-512.png','/favicon.svg','/logo.svg','/favicon.png','/apple-touch-icon.png'];
 async function cacheShell(cache){try{const response=await fetch('/',{credentials:'same-origin',cache:'no-store'});if(response.ok&&!response.redirected&&(response.headers.get('content-type')||'').includes('text/html')){const text=await response.clone().text();if(text.includes('name="since-app-shell"'))await cache.put('/',response);}}catch{}}
 self.addEventListener('install',event=>event.waitUntil((async()=>{const cache=await caches.open(CACHE);await cache.addAll(FIXED);let assets=[];try{const r=await fetch('/pwa-assets.json',{cache:'no-store'});if(r.ok)assets=await r.json();}catch{}await cache.addAll(assets.filter(p=>typeof p==='string'&&p.startsWith('/_next/')));await cacheShell(cache);})()));
 self.addEventListener('activate',event=>event.waitUntil((async()=>{for(const name of await caches.keys())if(name.startsWith('since-pwa-')&&name!==CACHE)await caches.delete(name);await self.clients.claim();})()));

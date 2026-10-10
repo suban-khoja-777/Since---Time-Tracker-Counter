@@ -37,7 +37,7 @@ export default function Tracker(){
  async function refresh(){setRefreshing(true);try{await reload()}catch{}finally{setRefreshing(false)}}
  return <SidebarProvider><Toaster richColors position="bottom-right"/>
  <Sidebar className="app-sidebar" collapsible="offcanvas"><SidebarHeader>
-  <div className="brand-row"><div className="brand">Since</div><SidebarTrigger aria-label="Collapse sidebar"/></div>
+  <div className="brand-row"><div className="brand"><img className="since-logo" src="/logo.svg" width="30" height="30" alt=""/>Since</div><SidebarTrigger aria-label="Collapse sidebar"/></div>
   <div className="workspace-picker"><Select value={workspace} onValueChange={switchWorkspace}><SelectTrigger aria-label="Switch workspace" className="w-full border-0 shadow-none px-0"><SelectValue placeholder="Workspace"/></SelectTrigger><SelectContent>{data?.workspaces.map(w=><SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>)}</SelectContent></Select></div>
   <button className="workspace-add" onClick={()=>open({type:'workspace'})} disabled={!data}><Plus size={14}/>New workspace</button>
  </SidebarHeader><SidebarContent>
