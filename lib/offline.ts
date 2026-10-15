@@ -1,3 +1,4 @@
+import {dateISO} from './timers';
 import type {Snapshot, Event} from './timers';
 import {timerInput,eventInput,namedInput,labelName,assertTimerDate,assertEventDate} from './validation';
 export type Command=Record<string,unknown>;
@@ -17,7 +18,7 @@ export function applyOffline(current:DeviceData,command:Command):DeviceData{
   const value={id,name,...kind==='workspaces'?{}:{workspaceId:p.workspaceId}};
   const index=list.findIndex(v=>v.id===id);if(index<0)list.push(value);else list[index]=value;
  }else if(action==='save-timer'){
-  const p=timerInput.parse(command);workspace(p.workspaceId);if(p.resetEnabled)assertTimerDate(p.kind,p.startedAt);
+  const p=timerInput.parse(command);workspace(p.workspaceId);if(p.resetEnabled)assertTimerDate(p.kind,p.startedAt,Date.now(),p.dateOnly);
   if(p.kind==='until'&&p.counter)throw Error('Countdown timers do not have counters.');
   if(p.folderId&&!data.folders.some(f=>f.id===p.folderId&&f.workspaceId===p.workspaceId))throw Error('Choose a folder in this workspace.');
   const index=data.timers.findIndex(t=>t.id===id);if(index>=0&&data.timers[index].deletedAt)throw Error('This timer is in Trash. Restore it before editing.');
@@ -26,7 +27,7 @@ export function applyOffline(current:DeviceData,command:Command):DeviceData{
   const value={...p,deletedAt:null,count:0,lastEvent:null};if(index<0)data.timers.push(value);else data.timers[index]=value;
  }else if(action==='record-event'){
   const p=eventInput.parse(command),t=data.timers.find(t=>t.id===p.timerId);if(!t)throw Error('Timer not found.');
-  if(t.deletedAt)throw Error('This timer is in Trash.');if(t.resetEnabled===false||t.kind!=='since')throw Error('Resets are disabled for this timer.');assertEventDate(p.happenedAt,t.startedAt);
+  if(t.deletedAt)throw Error('This timer is in Trash.');if(t.resetEnabled===false||t.kind!=='since')throw Error('Resets are disabled for this timer.');if(t.dateOnly)p.happenedAt=dateISO(p.happenedAt,true);assertEventDate(p.happenedAt,t.startedAt,Date.now(),t.dateOnly);
   const old=next.events.find(e=>e.id===id);if(old&&old.timerId!==p.timerId)throw Error('Event identifier already used.');
   if(!old)next.events.push({...p,createdAt:new Date().toISOString()});
  }else if(action==='delete-event'){
